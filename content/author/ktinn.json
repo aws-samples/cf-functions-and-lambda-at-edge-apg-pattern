@@ -1,0 +1,18 @@
+{
+    "authorId": "ktinn",
+    "blogs": [
+        {
+            "id": 1,
+            "title": "CloudFront Functions and Lambda@Edge"
+        },
+        {
+            "id": 2,
+            "title": "Kinesis Analytics Pipleines"
+        },
+        {
+            "id": 3,
+            "title": "CloudFront Origin Security"
+        }
+    ]
+
+}

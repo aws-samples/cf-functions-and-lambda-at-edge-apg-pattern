@@ -1,0 +1,13 @@
+{
+    "authorId": "jsmith",
+    "blogs": [
+        {
+            "id": 4,
+            "title": "Closing S3 Pubic Access"
+        },
+        {
+            "id": 5,
+            "title": "CDK constructs"
+        }
+    ]
+}
