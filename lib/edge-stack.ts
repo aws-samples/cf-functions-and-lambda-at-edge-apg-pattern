@@ -10,7 +10,8 @@ import {
   Distribution,
   FunctionEventType,
   LambdaEdgeEventType, 
-  ViewerProtocolPolicy
+  ViewerProtocolPolicy,
+  CachePolicy
 } from 'monocdk/aws-cloudfront';
 
 export class EdgeStack extends Stack {
@@ -47,37 +48,45 @@ export class EdgeStack extends Stack {
       runtime: Runtime.NODEJS_16_X,
     });
 
-    // const s3PolicyStatement = new PolicyStatement({
-    //   actions: ['s3:*'],
-    //   resources: ['arn:aws:s3:::*'],
-    // });
+    const s3PolicyStatement = new PolicyStatement({
+      actions: ['s3:*'],
+      resources: [originBucket.bucketArn],
+    });
 
-    // authorFunction.role?.attachInlinePolicy(
-    //   new Policy(this, 'bucket-policy', {
-    //     statements: [s3PolicyStatement],
-    //   }),
-    // );
+    authorFunction.role?.attachInlinePolicy(
+      new Policy(this, 'bucket-policy', {
+        statements: [s3PolicyStatement],
+      }),
+    );
+    
+    //default to disabled cache to allow faster development feedback
+    const defaultCachePolicy = CachePolicy.CACHING_DISABLED;
+    const defaultViewerProtocolPolicy = ViewerProtocolPolicy.REDIRECT_TO_HTTPS;
     
     const distro = new Distribution(this, 'cf-distro', {
       defaultBehavior: {
-        viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        viewerProtocolPolicy: defaultViewerProtocolPolicy,
         origin: s3Origin,
         functionAssociations: [{
           function: rejectFunction,
           eventType: FunctionEventType.VIEWER_REQUEST,
-        }]
+        }],
+        cachePolicy: defaultCachePolicy
+
       },
       additionalBehaviors: {
         'entry/*.json': {
-          viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          viewerProtocolPolicy: defaultViewerProtocolPolicy,
           origin: s3Origin,
           functionAssociations: [{
             function: cacheControlFunction,
             eventType: FunctionEventType.VIEWER_RESPONSE,
-          }]
+          }],
+    
+          cachePolicy: defaultCachePolicy
         },
         'blog/*': {
-          viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          viewerProtocolPolicy: defaultViewerProtocolPolicy,
           origin: s3Origin,
           functionAssociations: [
             {
@@ -88,10 +97,12 @@ export class EdgeStack extends Stack {
               function: cacheControlFunction,
               eventType: FunctionEventType.VIEWER_RESPONSE,
             }
-          ]
+          ],
+    
+          cachePolicy: defaultCachePolicy
         },
         'author/*.json?fields*': {
-          viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          viewerProtocolPolicy: defaultViewerProtocolPolicy,
           origin: s3Origin,
           edgeLambdas: [{
             functionVersion: authorFunction.currentVersion,
@@ -100,15 +111,18 @@ export class EdgeStack extends Stack {
           functionAssociations: [{
               function: cacheControlFunction,
               eventType: FunctionEventType.VIEWER_RESPONSE,
-          }]
+          }],
+    
+          cachePolicy: defaultCachePolicy
         },
         'author/*.json': {
-          viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          viewerProtocolPolicy: defaultViewerProtocolPolicy,
           origin: s3Origin,
           functionAssociations: [{
               function: cacheControlFunction,
               eventType: FunctionEventType.VIEWER_RESPONSE,
-          }]
+          }],
+          cachePolicy: defaultCachePolicy
         }
       }
     });
