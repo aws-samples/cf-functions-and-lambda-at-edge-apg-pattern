@@ -9,6 +9,7 @@ const s3 = new S3();
 export const handler =
   async (event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> => {
     try {
+      console.log(`Request: ${JSON.stringify(event)}`);
       const request = event.Records[0].cf.request;
       
       const authorId = request.uri.split('/').pop();
