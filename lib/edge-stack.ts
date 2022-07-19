@@ -23,19 +23,19 @@ export class EdgeStack extends Stack {
 
     const redirectFunction = new CFFunction(this, 'redirectFunction', {
       code: FunctionCode.fromFile({
-        filePath: 'cf-funcs/redirect.js'
+        filePath: 'funcs/redirect.js'
       }),
     });
 
     const rejectFunction = new CFFunction(this, 'rejectFunction', {
       code: FunctionCode.fromFile({
-        filePath: 'cf-funcs/reject.js'
+        filePath: 'funcs/reject.js'
       }),
     });
 
     const cacheControlFunction = new CFFunction(this, 'cacheControlFunction', {
       code: FunctionCode.fromFile({
-        filePath: 'cf-funcs/cacheControl.js'
+        filePath: 'funcs/cacheControl.js'
       }),
     });
 
