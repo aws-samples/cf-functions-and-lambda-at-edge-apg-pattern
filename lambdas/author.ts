@@ -19,7 +19,7 @@ export const handler =
       const key = `author/${authorId}.json`;
 
       const bucketParams = {
-        Bucket: request.origin?.s3?.domainName ?? "",
+        Bucket: request.origin?.s3?.domainName.split('.')[0] ?? '',
         Key: key,
       };
 

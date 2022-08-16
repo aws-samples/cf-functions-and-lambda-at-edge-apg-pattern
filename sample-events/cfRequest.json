@@ -11,7 +11,7 @@
                 "request": {
                     "origin": {
                         "s3": {
-                            "domainName": "edgestack-cforigin9470f569-11zokdadhsoja"
+                            "domainName": "edgestack-cforigin9470f569-ebgej4g21vyz.s3.us-east-1.amazonaws.com"
                         }
                     },
                     "clientIp": "203.0.113.178",
@@ -36,8 +36,8 @@
                         ]
                     },
                     "method": "GET",
-                    "querystring": "fields=field1,field2,field3(nestedField1(nestedField1,nestedField2)),nonExistentField",
-                    "uri": "/author/ktinn.json"
+                    "querystring": "fields=blogs",
+                    "uri": "/author/ktinn"
                 }
             }
         }
