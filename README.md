@@ -42,6 +42,52 @@ Use the built-in continuous integration in GitLab.
 - [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
 - [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
 
+## Deploy and use pattern
+### Clone repo and deploy
+```
+git clone git@ssh.gitlab.aws.dev:kttinn/cf-functions-and-lambda-at-edge-apg-pattern.git edge-pattern && cd edge-pattern
+npm install
+npm run build
+cd lambdas && npm install --save && cd -
+cdk deploy
+```
+### Upload content
+Using originBucketName CDK deployment output, update ./scripts/upload-content.sh to use your bucket name.  Please note you must have valid AWS CLI access credentials configured.
+```
+chmod +x ./scripts/upload-content.sh
+./scripts/upload-content.sh
+```
+Confirm content by viewing files in author and entry prefixes:
+```
+aws s3 ls s3://<bucketName>/author/
+aws s3 ls s3://<bucketName>/entry/
+```
+### Demonstrate pattern
+Using distributionDomainName CDK deployment output, perform HTTP GET on the following URLs to retrieve content:
+```
+curl https://<distributionDomainName>/entry/1.json
+curl https://<distributionDomainName>/blog/1
+curl https://<distributionDomainName>/author/ktinn
+curl https://<distributionDomainName>/author/ktinn?fields=blogs
+```
+Observe cache-control header in verbose response:
+```
+curl -v https://d2k1vcagwly1pw.cloudfront.net/entry/1.json
+```
+Observe 404 when using unsupported url:
+```
+curl -v https://<distributionDomainName>/giveMe404
+```
+### Delete Lambda@Edge replicated lambda instances
+In the author/* behavior in the CloudFront distribution, set Origin request to "No association"
+
+In the lambda, click into the latest version and delete the CloudFront trigger
+
+Give CloudFront ~1 hour to delete the copies of lambda that have been propagated
+### Destroy stack
+```
+cdk destory --force
+```
 ***
 
 # Editing this README
