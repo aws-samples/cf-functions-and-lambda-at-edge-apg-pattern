@@ -1,8 +1,8 @@
 import { Stack, StackProps, CfnOutput } from 'monocdk';
 import { Construct } from 'constructs';
 import { Bucket } from 'monocdk/aws-s3';
-import { Code, Function as LambdaFunction, Runtime, Version } from 'monocdk/aws-lambda';
-import { PolicyStatement, Policy, Effect, ServicePrincipal } from 'monocdk/aws-iam';
+import { Code, Runtime } from 'monocdk/aws-lambda';
+import { PolicyStatement, Effect } from 'monocdk/aws-iam';
 import {  } from 'monocdk/aws-lambda-event-sources';
 import { S3Origin } from 'monocdk/aws-cloudfront-origins';
 import { 
