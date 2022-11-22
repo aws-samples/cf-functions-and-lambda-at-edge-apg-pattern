@@ -11,6 +11,17 @@ To demonstrate these use cases, we will simulate serving content for a blogging 
 ***
 
 ## Deploy and Use Pattern
+
+### Prerequisites
+  * An AWS Account you have access to deploy resources to
+  * Node.js (v14 or higher)
+  * NPM (v7 or higher)
+  * AWS CDK (v2 or higher)
+  * AWS CLI
+  * cURL
+  * jq
+  * AWS CloudFront is a global service, as such this pattern much be deployed to us-east-1 region
+
 ### Clone Repo and Deploy
 ```
 git clone git@github.com:aws-samples/cf-functions-and-lambda-at-edge-apg-pattern.git edge-pattern && cd edge-pattern
@@ -33,19 +44,33 @@ aws s3 ls s3://<bucketName>/entry/
 ### Demonstrate Pattern
 Using distributionDomainName CDK deployment output, perform HTTP GET on the following URLs to retrieve content:
 ```
-curl https://<distributionDomainName>/entry/1.json
-curl https://<distributionDomainName>/blog/1
-curl https://<distributionDomainName>/author/ktinn
-curl https://<distributionDomainName>/author/ktinn?fields=blogs
+export CF_DISTRO="<distributionDomainName>"
+
+# content returned directly from Amazon S3
+curl "https://$CF_DISTRO/entry/1.json" | jq
+
+# content returned from Amazon S3 after redirect response from AWS CloudFront Function
+# -L: follow 300-level http redirect
+curl -L "https://$CF_DISTRO/blog/1" | jq
+
+# get full author response, including authorId
+curl "https://$CF_DISTRO/author/ktinn" | jq
+
+# notice authorId does not get returned, Lambda@Edge masks response
+curl "https://$CF_DISTRO/author/ktinn?fields=blogs" | jq
 ```
+
 Observe cache-control header in verbose response:
 ```
-curl -v https://d2k1vcagwly1pw.cloudfront.net/entry/1.json
+# -v: verbose  
+curl -v "https://$CF_DISTRO/entry/1.json"
 ```
+
 Observe 404 when using unsupported url:
 ```
-curl -v https://<distributionDomainName>/giveMe404
+curl -v "https://$CF_DISTRO/giveMe404"
 ```
+
 ### Delete Lambda@Edge Replicated Lambda Instances
 In the author/* behavior in the CloudFront distribution, set Origin request to "No association"
 
@@ -54,8 +79,11 @@ In the lambda, click into the latest version and delete the CloudFront trigger
 Give CloudFront ~1 hour to delete the copies of lambda that have been propagated
 ### Destroy Stack
 ```
-cdk destory --force
+cdk destroy --force
 ```
+
+It should be noted the bucket is not deleted during `cdk destroy`, and will need to be emptied/deleted manually.
+
 ***
 ## Contributing
 
