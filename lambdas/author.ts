@@ -1,19 +1,19 @@
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { CloudFrontRequestEvent, CloudFrontRequestResult } from "aws-lambda";
-import { S3 } from "aws-sdk";
-import { URLSearchParams } from "url"
+import { URLSearchParams } from "url";
 
 var mask = require("json-mask");
 
-const s3 = new S3();
+const s3Client = new S3Client({});
 
 export const handler =
   async (event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> => {
     try {
       console.log(`Request: ${JSON.stringify(event)}`);
       const request = event.Records[0].cf.request;
-      
+
       const authorId = request.uri.split('/').pop();
-      
+
       const params = new URLSearchParams(request.querystring);
       const fields = params.get("fields");
       const key = `author/${authorId}.json`;
@@ -26,7 +26,7 @@ export const handler =
       console.log(`Retrieving : ${bucketParams.Key} from ${bucketParams.Bucket}`);
 
       try {
-        const s3Obj = await s3.getObject(bucketParams).promise();
+        const s3Obj = await s3Client.send(new GetObjectCommand(bucketParams));
         const j = JSON.parse((s3Obj?.Body ?? {}).toString());
         const maskedObj = mask(j, fields);
 
@@ -42,7 +42,9 @@ export const handler =
             }]
           }
         };
-      } catch (err) {
+      } catch (err: any) {
+        //fix code
+
         if (err.code == "NoSuchKey") {
           console.error(`${err.code}: ${bucketParams.Bucket}/${bucketParams.Key}`);
           return {
@@ -57,7 +59,7 @@ export const handler =
           };
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(`Unexpected error occurred: ${e.message}`);
       return {
         status: "500",

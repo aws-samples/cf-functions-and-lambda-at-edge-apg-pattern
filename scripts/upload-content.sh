@@ -1,1 +1,1 @@
-aws s3 cp content s3://edgestack-cforigin9470f569-ebgej4g21vyz  --recursive
+aws s3 cp content s3://edgestack-cforigin9470f569-1jbhjzr54r6kb  --recursive

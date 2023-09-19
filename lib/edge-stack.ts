@@ -1,30 +1,31 @@
-import { Stack, StackProps, CfnOutput } from 'monocdk';
+// import { Stack, StackProps, CfnOutput } from 'aws-cdk-lib/';
 import { Construct } from 'constructs';
-import { Bucket } from 'monocdk/aws-s3';
-import { Code, Runtime } from 'monocdk/aws-lambda';
-import { PolicyStatement, Effect } from 'monocdk/aws-iam';
-import {  } from 'monocdk/aws-lambda-event-sources';
-import { S3Origin } from 'monocdk/aws-cloudfront-origins';
-import { 
+
+import { CfnOutput, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import {
   Function as CFFunction,
-  FunctionCode,
-  Distribution,
-  FunctionEventType,
-  LambdaEdgeEventType, 
-  ViewerProtocolPolicy,
   CachePolicy,
-  experimental,
-  OriginRequestPolicy
-} from 'monocdk/aws-cloudfront';
+  Distribution,
+  FunctionCode,
+  FunctionEventType,
+  LambdaEdgeEventType,
+  OriginRequestPolicy,
+  ViewerProtocolPolicy,
+  experimental
+} from 'aws-cdk-lib/aws-cloudfront';
+import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
+import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Code, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { BlockPublicAccess, Bucket, BucketEncryption, ObjectOwnership } from 'aws-cdk-lib/aws-s3';
 
 
 export class EdgeStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
-    super(scope, id, props);  
+    super(scope, id, props);
 
     const originBucket = new Bucket(this, "cf-origin");
     const s3Origin = new S3Origin(originBucket);
-    
+
 
     const redirectFunction = new CFFunction(this, 'redirectFunction', {
       code: FunctionCode.fromFile({
@@ -49,10 +50,10 @@ export class EdgeStack extends Stack {
     const authorFunction = new experimental.EdgeFunction(this, 'authorLambda', {
       code: Code.fromAsset("lambdas"),
       handler: "author.handler",
-      runtime: Runtime.NODEJS_16_X,
-      
+      runtime: Runtime.NODEJS_18_X,
+
     });
-    
+
     const s3PolicyStatement = new PolicyStatement({
       effect: Effect.ALLOW,
       actions: ['s3:GetObject'],
@@ -60,12 +61,19 @@ export class EdgeStack extends Stack {
     });
 
     authorFunction.addToRolePolicy(s3PolicyStatement);
-        
+
     //default to disabled cache to allow faster development feedback
     const defaultCachePolicy = CachePolicy.CACHING_DISABLED;
     const defaultViewerProtocolPolicy = ViewerProtocolPolicy.REDIRECT_TO_HTTPS;
-    
-    const cfLogBucket = new Bucket(this, 'cf-logs');
+
+    const cfLogBucket = new Bucket(this, 'cf-logs', {
+      encryption: BucketEncryption.S3_MANAGED,
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      enforceSSL: true,
+      removalPolicy: RemovalPolicy.DESTROY,
+      objectOwnership: ObjectOwnership.OBJECT_WRITER,
+      autoDeleteObjects: true,
+    });
     const distro = new Distribution(this, 'cf-distro', {
       enableLogging: true,
       logBucket: cfLogBucket,
@@ -77,7 +85,6 @@ export class EdgeStack extends Stack {
           eventType: FunctionEventType.VIEWER_REQUEST,
         }],
         cachePolicy: defaultCachePolicy
-
       },
       additionalBehaviors: {
         'entry/*.json': {
@@ -87,7 +94,7 @@ export class EdgeStack extends Stack {
             function: cacheControlFunction,
             eventType: FunctionEventType.VIEWER_RESPONSE,
           }],
-    
+
           cachePolicy: defaultCachePolicy
         },
         'blog/*': {
@@ -103,7 +110,7 @@ export class EdgeStack extends Stack {
               eventType: FunctionEventType.VIEWER_RESPONSE,
             }
           ],
-    
+
           cachePolicy: defaultCachePolicy
         },
         'author/*': {
@@ -115,10 +122,10 @@ export class EdgeStack extends Stack {
             eventType: LambdaEdgeEventType.ORIGIN_REQUEST,
           }],
           functionAssociations: [{
-              function: cacheControlFunction,
-              eventType: FunctionEventType.VIEWER_RESPONSE,
+            function: cacheControlFunction,
+            eventType: FunctionEventType.VIEWER_RESPONSE,
           }],
-    
+
           cachePolicy: defaultCachePolicy
         }
       }
