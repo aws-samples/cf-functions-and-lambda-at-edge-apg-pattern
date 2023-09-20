@@ -1,6 +1,6 @@
 #!/usr/bin/env node
+import { App } from 'aws-cdk-lib';
 import 'source-map-support/register';
-import { App } from 'monocdk';
 import { EdgeStack } from '../lib/edge-stack';
 
 const app = new App();
